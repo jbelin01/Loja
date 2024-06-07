@@ -2267,19 +2267,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Pacheco\\.nuget\\packages\\": {}
+    "C:\\Users\\João Gabriel\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Pacheco\\Documents\\João Gabriel\\aulas\\API\\Loja\\Loja.csproj",
+      "projectUniqueName": "C:\\Users\\João Gabriel\\OneDrive\\Área de Trabalho\\UP\\João Gabriel\\API\\Loja\\Loja.csproj",
       "projectName": "Loja",
-      "projectPath": "C:\\Users\\Pacheco\\Documents\\João Gabriel\\aulas\\API\\Loja\\Loja.csproj",
-      "packagesPath": "C:\\Users\\Pacheco\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Pacheco\\Documents\\João Gabriel\\aulas\\API\\Loja\\obj\\",
+      "projectPath": "C:\\Users\\João Gabriel\\OneDrive\\Área de Trabalho\\UP\\João Gabriel\\API\\Loja\\Loja.csproj",
+      "packagesPath": "C:\\Users\\João Gabriel\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\João Gabriel\\OneDrive\\Área de Trabalho\\UP\\João Gabriel\\API\\Loja\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Pacheco\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\João Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -2342,7 +2342,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.301/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
