@@ -1,194 +1,160 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Loja.Data;
 using Loja.Models;
-using Loja.Services;    
-
+using Loja.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar a conexão com o BD
+// Configurar a conexão com o banco de dados
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<LojaDbContext>(options => options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 26))));
+builder.Services.AddDbContext<LojaDbContext>(options =>
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 26))));
 
+// Registrar ProductService, ClienteService e FornecedorService para injeção de dependência
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<FornecedorService>();
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
-
+// Configurar as requisições HTTP
 if (app.Environment.IsDevelopment())
 {
-app.UseDeveloperExceptionPage();
+    app.UseDeveloperExceptionPage();
 }
 
-// Produto -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+app.UseHttpsRedirection();
 
+// Endpoint para obter todos os produtos
 app.MapGet("/produtos", async (ProductService productService) =>
 {
-var produtos = await productService.GetAllProductsAsync();
-return Results.Ok(produtos);
+    var produtos = await productService.GetAllProductsAsync();
+    return Results.Ok(produtos);
 });
 
+// Endpoint para obter um produto pelo ID
 app.MapGet("/produtos/{id}", async (int id, ProductService productService) =>
 {
-var produto = await productService.GetProductByIdAsync(id);
-if (produto == null)
-{
-return Results.NotFound($"Product with ID {id} not found.");
-}
-return Results.Ok(produto);
-});
-
-app.MapPost("/produtos", async (Produto produto, ProductService productService) =>
-{
-await productService.AddProductAsync(produto);
-return Results.Created($"/produtos/{produto.Id}", produto);
-
-});
-
-
-app.MapPut("/produtos/{Id}", async (int id, Produto produto, ProductService productService) =>
-{
-if (id != produto.Id)
-{
-return Results.BadRequest("Product ID mismatch.");
-}
-await productService.UpdateProductAsync(produto);
-return Results.Ok();
-});
-app.MapDelete("/produtos/{Id}", async (int id, ProductService productService) =>
-{
-await productService.DeleteProductAsync(id);
-return Results.Ok();
-});
-
-// Endpoint para atualizar um Produto existente
-app.MapPut("/produtos/{Id}", async (int Id, LojaDbContext dbContext, Produto updatedProduto) =>
-{
-    //Verifica se o produto existe na base, conforme o id informado
-    //Se o produto existir na base, será retornado para dentro do objeto existingProduto
-    var existingProduto = await dbContext.Produtos.FindAsync(Id);
-    if (existingProduto == null)
+    var produto = await productService.GetProductByIdAsync(id);
+    if (produto == null)
     {
-        return Results.NotFound($"Produto with ID {Id} not found.");
+        return Results.NotFound($"Product with ID {id} not found.");
     }
-    //Atualiza os dados do existingProduto
-    existingProduto.Nome = updatedProduto.Nome;
-    existingProduto.Preco = updatedProduto.Preco;
-    existingProduto.Fornecedor = updatedProduto.Fornecedor;
-    //Salva no banco de dados
-    await dbContext.SaveChangesAsync();
-    //Retorna para o cliente que invocou o endpoint
-    return Results.Ok(existingProduto);
+    return Results.Ok(produto);
 });
 
-
-// Cliente -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-app.MapPost("/createcliente", async (LojaDbContext dbContext, Cliente newCliente) =>
+// Endpoint para criar um novo produto
+app.MapPost("/createprodutos", async (Produto produto, ProductService productService) =>
 {
-    dbContext.Clientes.Add(newCliente);
-    await dbContext.SaveChangesAsync();
-    return Results.Created($"/createcliente/{newCliente.Id}", newCliente);
+    await productService.AddProductAsync(produto);
+    return Results.Created($"/produtos/{produto.Id}", produto); 
 });
 
-app.MapGet("/clientes", async (LojaDbContext dbContext) => 
+// Endpoint para atualizar um produto existente
+app.MapPut("/produtos/{id}", async (int id, Produto produto, ProductService productService) =>
 {
-
-    var clientes = await dbContext.Clientes.ToListAsync();
-    return Results.Ok(clientes);
-
-});
-
-app.MapGet("/clientes/{Id}", async (int Id, LojaDbContext dbContext) => 
-{
-
-    var clientes = await dbContext.Clientes.FindAsync(Id);
-    if (clientes == null)
+    if (id != produto.Id)
     {
-
-        return Results.NotFound($"Cliente with ID {Id} not found. ");
-
+        return Results.BadRequest("Product ID mismatch.");
     }
+    await productService.UpdateProductAsync(produto);
+    return Results.Ok();
+});
 
+// Endpoint para deletar um produto
+app.MapDelete("/produtos/{id}", async (int id, ProductService productService) =>
+{
+    await productService.DeleteProductAsync(id);
+    return Results.Ok();
+});
+
+// Endpoint para obter todos os clientes
+app.MapGet("/clientes", async (ClienteService clienteService) =>
+{
+    var clientes = await clienteService.GetAllClientesAsync();
     return Results.Ok(clientes);
 });
 
-// Endpoint para atualizar um Cliente existente
-app.MapPut("/clientes/{Id}", async (int Id, LojaDbContext dbContext, Cliente updatedCliente) =>
+// Endpoint para obter um cliente pelo ID
+app.MapGet("/clientes/{id}", async (int id, ClienteService clienteService) =>
 {
-    //Verifica se o Cliente existe na base, conforme o id informado
-    //Se o Cliente existir na base, será retornado para dentro do objeto existingCliente
-    var existingCliente = await dbContext.Clientes.FindAsync(Id);
-    if (existingCliente == null)
+    var cliente = await clienteService.GetClienteByIdAsync(id);
+    if (cliente == null)
     {
-        return Results.NotFound($"Cliente with ID {Id} not found.");
+        return Results.NotFound($"Cliente with ID {id} not found.");
     }
-    //Atualiza os dados do existingCliente
-    existingCliente.Nome = updatedCliente.Nome;
-    existingCliente.Cpf = updatedCliente.Cpf;
-    existingCliente.Email = updatedCliente.Email;
-    //Salva no banco de dados
-    await dbContext.SaveChangesAsync();
-    //Retorna para o cliente que invocou o endpoint
-    return Results.Ok(existingCliente);
+    return Results.Ok(cliente);
 });
 
-
-// Fornecedor -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-app.MapPost("/createfornecedores", async (LojaDbContext dbContext, Fornecedor newFornecedor) =>
+// Endpoint para criar um novo cliente
+app.MapPost("/clientes", async (Cliente cliente, ClienteService clienteService) =>
 {
-    dbContext.Fornecedores.Add(newFornecedor);
-    await dbContext.SaveChangesAsync();
-    return Results.Created($"/createfornecedores/{newFornecedor.Id}", newFornecedor);
+    await clienteService.AddClienteAsync(cliente);
+    return Results.Created($"/clientes/{cliente.Id}", cliente);
 });
 
-app.MapGet("/fornecedores", async (LojaDbContext dbContext) => 
+// Endpoint para atualizar um cliente existente
+app.MapPut("/clientes/{id}", async (int id, Cliente cliente, ClienteService clienteService) =>
 {
-
-    var fornecedores = await dbContext.Fornecedores.ToListAsync();
-    return Results.Ok(fornecedores);
-
-});
-
-app.MapGet("/fornecedores/{Id}", async (int Id, LojaDbContext dbContext) => 
-{
-
-    var fornecedores = await dbContext.Fornecedores.FindAsync(Id);
-    if (fornecedores == null)
+    if (id != cliente.Id)
     {
-
-        return Results.NotFound($"Fornecedor with ID {Id} not found. ");
-
+        return Results.BadRequest("Cliente ID mismatch.");
     }
+    await clienteService.UpdateClienteAsync(cliente);
+    return Results.Ok();
+});
 
+// Endpoint para deletar um cliente
+app.MapDelete("/clientes/{id}", async (int id, ClienteService clienteService) =>
+{
+    await clienteService.DeleteClienteAsync(id);
+    return Results.Ok();
+});
+
+// Endpoint para obter todos os fornecedores
+app.MapGet("/fornecedores", async (FornecedorService fornecedorService) =>
+{
+    var fornecedores = await fornecedorService.GetAllFornecedoresAsync();
     return Results.Ok(fornecedores);
 });
 
-// Endpoint para atualizar um Fornecedor existente
-app.MapPut("/fornecedores/{Id}", async (int Id, LojaDbContext dbContext, Fornecedor updatedFornecedor) =>
+// Endpoint para obter um fornecedor pelo ID
+app.MapGet("/fornecedores/{id}", async (int id, FornecedorService fornecedorService) =>
 {
-    //Verifica se o Fornecedor existe na base, conforme o id informado
-    //Se o Fornecedor existir na base, será retornado para dentro do objeto existingFornecedor
-    var existingFornecedor = await dbContext.Fornecedores.FindAsync(Id);
-    if (existingFornecedor == null)
+    var fornecedor = await fornecedorService.GetFornecedorByIdAsync(id);
+    if (fornecedor == null)
     {
-        return Results.NotFound($"Fornecedor with ID {Id} not found.");
+        return Results.NotFound($"Fornecedor with ID {id} not found.");
     }
-    //Atualiza os dados do existingFornecedor
-    existingFornecedor.Cnpj = updatedFornecedor.Cnpj;
-    existingFornecedor.Nome = updatedFornecedor.Nome;
-    existingFornecedor.Endereco = updatedFornecedor.Endereco;
-    existingFornecedor.Email = updatedFornecedor.Email;
-    existingFornecedor.Telefone = updatedFornecedor.Telefone;
-    //Salva no banco de dados
-    await dbContext.SaveChangesAsync();
-    //Retorna para o Fornecedor que invocou o endpoint
-    return Results.Ok(existingFornecedor);
+    return Results.Ok(fornecedor);
+});
+
+// Endpoint para criar um novo fornecedor
+app.MapPost("/createfornecedores", async (Fornecedor fornecedor, FornecedorService fornecedorService) =>
+{
+    await fornecedorService.AddFornecedorAsync(fornecedor);
+    return Results.Created($"/fornecedores/{fornecedor.Id}", fornecedor);
+});
+
+// Endpoint para atualizar um fornecedor existente
+app.MapPut("/fornecedores/{id}", async (int id, Fornecedor fornecedor, FornecedorService fornecedorService) =>
+{
+    if (id != fornecedor.Id)
+    {
+        return Results.BadRequest("Fornecedor ID mismatch.");
+    }
+    await fornecedorService.UpdateFornecedorAsync(fornecedor);
+    return Results.Ok();
+});
+
+// Endpoint para deletar um fornecedor
+app.MapDelete("/fornecedores/{id}", async (int id, FornecedorService fornecedorService) =>
+{
+    await fornecedorService.DeleteFornecedorAsync(id);
+    return Results.Ok();
 });
 
 app.Run();

@@ -1,14 +1,25 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Loja.Models
 {
     public class Fornecedor
     {
+        [Key]
         public int Id { get; set; }
 
-        public string Cnpj {get; set;}
-        public string Nome { get; set; }
-        public string Endereco {get; set;}
-        public string Email {get; set;}
-        public double Telefone { get; set; } 
-        
+        [Required]
+        public string Cnpj { get; set; } 
+
+        [Required]
+        public string Nome { get; set; } 
+
+        [Required]
+        public string Endereco { get; set; } 
+
+        [Required]
+        public string Email { get; set; } 
+
+        [Required]
+        public string Telefone { get; set; } 
     }
 }

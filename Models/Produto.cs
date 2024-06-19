@@ -6,8 +6,14 @@ namespace Loja.Models
     {
         [Key]
         public int Id { get; set; }
-        public string Nome { get; set; }
-        public double Preco { get; set; }
-        public string Fornecedor { get; set; }
+
+        [Required]
+        public string Nome { get; set; } 
+
+        [Required]
+        public decimal Preco { get; set; }
+
+        [Required]
+        public string Fornecedor { get; set; } 
     }
 }
