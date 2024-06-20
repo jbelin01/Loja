@@ -1,21 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Loja.Data;
 using Loja.Models;
 using Loja.Services;
-using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +30,7 @@ builder.Services.AddDbContext<LojaDbContext>(options =>
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<FornecedorService>();
+builder.Services.AddScoped<VendaService>();
 
 var app = builder.Build();
 
@@ -52,11 +44,33 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapPost("/login", async (HttpContext context) =>
+{
+    using var reader = new StreamReader(context.Request.Body);
+    var body = await reader.ReadToEndAsync();
+    var json = JsonDocument.Parse(body);
+    var email = json.RootElement.GetProperty("email").GetString();
+    var senha = json.RootElement.GetProperty("senha").GetString();
+
+    // Implementar a validação do usuário e senha aqui.
+    // Exemplo simplificado para fins de demonstração:
+    if (senha == "1029")
+    {
+        var token = TokenService.GenerateToken(email);
+        await context.Response.WriteAsync(token);
+    }
+    else
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsync("Credenciais inválidas");
+    }
+});
+
 app.MapGet("/produtos", async (ProductService productService) =>
 {
     var produtos = await productService.GetAllProductsAsync();
     return Results.Ok(produtos);
-});
+}).RequireAuthorization();
 
 app.MapGet("/produtos/{id}", async (int id, ProductService productService) =>
 {
@@ -66,13 +80,13 @@ app.MapGet("/produtos/{id}", async (int id, ProductService productService) =>
         return Results.NotFound($"Produto com ID {id} não encontrado.");
     }
     return Results.Ok(produto);
-});
+}).RequireAuthorization();
 
 app.MapPost("/produtos", async (Produto produto, ProductService productService) =>
 {
     await productService.AddProductAsync(produto);
     return Results.Created($"/produtos/{produto.Id}", produto);
-});
+}).RequireAuthorization();
 
 app.MapPut("/produtos/{id}", async (int id, Produto produto, ProductService productService) =>
 {
@@ -82,19 +96,19 @@ app.MapPut("/produtos/{id}", async (int id, Produto produto, ProductService prod
     }
     await productService.UpdateProductAsync(produto);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.MapDelete("/produtos/{id}", async (int id, ProductService productService) =>
 {
     await productService.DeleteProductAsync(id);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.MapGet("/clientes", async (ClienteService clienteService) =>
 {
     var clientes = await clienteService.GetAllClientesAsync();
     return Results.Ok(clientes);
-});
+}).RequireAuthorization();
 
 app.MapGet("/clientes/{id}", async (int id, ClienteService clienteService) =>
 {
@@ -104,13 +118,13 @@ app.MapGet("/clientes/{id}", async (int id, ClienteService clienteService) =>
         return Results.NotFound($"Cliente com ID {id} não encontrado.");
     }
     return Results.Ok(cliente);
-});
+}).RequireAuthorization();
 
 app.MapPost("/clientes", async (Cliente cliente, ClienteService clienteService) =>
 {
     await clienteService.AddClienteAsync(cliente);
     return Results.Created($"/clientes/{cliente.Id}", cliente);
-});
+}).RequireAuthorization();
 
 app.MapPut("/clientes/{id}", async (int id, Cliente cliente, ClienteService clienteService) =>
 {
@@ -120,19 +134,19 @@ app.MapPut("/clientes/{id}", async (int id, Cliente cliente, ClienteService clie
     }
     await clienteService.UpdateClienteAsync(cliente);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.MapDelete("/clientes/{id}", async (int id, ClienteService clienteService) =>
 {
     await clienteService.DeleteClienteAsync(id);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.MapGet("/fornecedores", async (FornecedorService fornecedorService) =>
 {
     var fornecedores = await fornecedorService.GetAllFornecedoresAsync();
     return Results.Ok(fornecedores);
-});
+}).RequireAuthorization();
 
 app.MapGet("/fornecedores/{id}", async (int id, FornecedorService fornecedorService) =>
 {
@@ -142,13 +156,13 @@ app.MapGet("/fornecedores/{id}", async (int id, FornecedorService fornecedorServ
         return Results.NotFound($"Fornecedor com ID {id} não encontrado.");
     }
     return Results.Ok(fornecedor);
-});
+}).RequireAuthorization();
 
 app.MapPost("/fornecedores", async (Fornecedor fornecedor, FornecedorService fornecedorService) =>
 {
     await fornecedorService.AddFornecedorAsync(fornecedor);
     return Results.Created($"/fornecedores/{fornecedor.Id}", fornecedor);
-});
+}).RequireAuthorization();
 
 app.MapPut("/fornecedores/{id}", async (int id, Fornecedor fornecedor, FornecedorService fornecedorService) =>
 {
@@ -158,63 +172,62 @@ app.MapPut("/fornecedores/{id}", async (int id, Fornecedor fornecedor, Fornecedo
     }
     await fornecedorService.UpdateFornecedorAsync(fornecedor);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.MapDelete("/fornecedores/{id}", async (int id, FornecedorService fornecedorService) =>
 {
     await fornecedorService.DeleteFornecedorAsync(id);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
-app.MapPost("/login", async (HttpContext context) =>
+// Rotas para Vendas
+app.MapPost("/vendas", async (Venda venda, VendaService vendaService) =>
 {
-    using var reader = new StreamReader(context.Request.Body);
-    var body = await reader.ReadToEndAsync();
-    var json = JsonDocument.Parse(body);
-    var username = json.RootElement.GetProperty("username").GetString();
-    var email = json.RootElement.GetProperty("email").GetString();
-    var senha = json.RootElement.GetProperty("senha").GetString();
-
-    var token = "";
-    if (senha == "1029")
+    var result = await vendaService.AddVendaAsync(venda);
+    if (result)
     {
-        token = TokenService.GenerateToken(email);
+        return Results.Created($"/vendas/{venda.Id}", venda);
     }
+    return Results.BadRequest("Cliente ou produto não encontrado.");
+}).RequireAuthorization();
 
-    await context.Response.WriteAsync(token);
-});
-
-app.MapGet("/rotaSegura", async (HttpContext context) =>
+app.MapGet("/vendas/produto/{produtoId}", async (int produtoId, VendaService vendaService) =>
 {
-    if (!context.Request.Headers.ContainsKey("Authorization"))
+    var vendas = await vendaService.GetVendasByProdutoDetalhadaAsync(produtoId);
+    return Results.Ok(vendas.Select(v => new
     {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        await context.Response.WriteAsync("Token não fornecido");
-        return;
-    }
+        NomeProduto = v.Produto.Nome,
+        DataVenda = v.DataVenda,
+        IdVenda = v.Id,
+        NomeCliente = v.Cliente.Nome,
+        QuantidadeVendida = v.QuantidadeVendida,
+        PrecoVenda = v.PrecoUnitario
+    }));
+}).RequireAuthorization();
 
-    var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-    var tokenHandler = new JwtSecurityTokenHandler();
-    var key = Encoding.ASCII.GetBytes("abcabcabcabcabcabcabcabcabcabcabc");
+app.MapGet("/vendas/produto/{produtoId}/sumarizada", async (int produtoId, VendaService vendaService) =>
+{
+    var venda = await vendaService.GetVendasByProdutoSumarizadaAsync(produtoId);
+    return Results.Ok(venda);
+}).RequireAuthorization();
 
-    try
+app.MapGet("/vendas/cliente/{clienteId}", async (int clienteId, VendaService vendaService) =>
+{
+    var vendas = await vendaService.GetVendasByClienteDetalhadaAsync(clienteId);
+    return Results.Ok(vendas.Select(v => new
     {
-        tokenHandler.ValidateToken(token, new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        }, out _);
-    }
-    catch (Exception)
-    {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        await context.Response.WriteAsync("Token inválido");
-        return;
-    }
+        NomeProduto = v.Produto.Nome,
+        DataVenda = v.DataVenda,
+        IdVenda = v.Id,
+        QuantidadeVendida = v.QuantidadeVendida,
+        PrecoVenda = v.PrecoUnitario
+    }));
+}).RequireAuthorization();
 
-    await context.Response.WriteAsync("Autorizado");
-});
+app.MapGet("/vendas/cliente/{clienteId}/sumarizada", async (int clienteId, VendaService vendaService) =>
+{
+    var venda = await vendaService.GetVendasByClienteSumarizadaAsync(clienteId);
+    return Results.Ok(venda);
+}).RequireAuthorization();
 
 app.Run();
