@@ -8,18 +8,18 @@ namespace Loja.Models
         public int Id { get; set; }
 
         [Required]
-        public string Cnpj { get; set; } 
+        public string Cnpj { get; set; } = string.Empty; 
 
         [Required]
-        public string Nome { get; set; } 
+        public string Nome { get; set; } = string.Empty; 
 
         [Required]
-        public string Endereco { get; set; } 
+        public string Endereco { get; set; } = string.Empty; 
 
         [Required]
-        public string Email { get; set; } 
+        public string Email { get; set; } = string.Empty; 
 
         [Required]
-        public string Telefone { get; set; } 
+        public string Telefone { get; set; } = string.Empty; 
     }
 }

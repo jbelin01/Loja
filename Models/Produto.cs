@@ -8,12 +8,12 @@ namespace Loja.Models
         public int Id { get; set; }
 
         [Required]
-        public string Nome { get; set; } 
+        public string Nome { get; set; } = string.Empty; 
 
         [Required]
         public decimal Preco { get; set; }
 
         [Required]
-        public string Fornecedor { get; set; } 
+        public string Fornecedor { get; set; } = string.Empty; 
     }
 }

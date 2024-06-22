@@ -8,12 +8,12 @@ namespace Loja.Models
         public int Id { get; set; }
 
         [Required]
-        public string Nome { get; set; }
+        public string Nome { get; set; } = string.Empty; 
 
         [Required]
-        public string Cpf { get; set; }
+        public string Cpf { get; set; } = string.Empty; 
 
         [Required]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty; 
     }
 }
