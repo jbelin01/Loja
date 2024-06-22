@@ -18,7 +18,6 @@ namespace Loja.Services
 
         public async Task<bool> AddVendaAsync(Venda venda)
         {
-            // Validação se o cliente e produto existem
             var cliente = await _context.Clientes.FindAsync(venda.ClienteId);
             var produto = await _context.Produtos.FindAsync(venda.ProdutoId);
 
@@ -50,14 +49,15 @@ namespace Loja.Services
                 {
                     NomeProduto = g.First().Produto.Nome,
                     QuantidadeTotalVendida = g.Sum(v => v.QuantidadeVendida),
-                    PrecoTotalVendido = g.Sum(v => v.PrecoUnitario * v.QuantidadeVendida)
+                    ValorTotal = g.Sum(v => v.QuantidadeVendida * v.PrecoUnitario)
                 })
-                .FirstOrDefaultAsync();
+                .ToListAsync();
         }
 
         public async Task<List<Venda>> GetVendasByClienteDetalhadaAsync(int clienteId)
         {
             return await _context.Vendas
+                .Include(v => v.Cliente)
                 .Include(v => v.Produto)
                 .Where(v => v.ClienteId == clienteId)
                 .ToListAsync();
@@ -70,10 +70,11 @@ namespace Loja.Services
                 .GroupBy(v => v.ClienteId)
                 .Select(g => new
                 {
+                    NomeCliente = g.First().Cliente.Nome,
                     QuantidadeTotalVendida = g.Sum(v => v.QuantidadeVendida),
-                    PrecoTotalVendido = g.Sum(v => v.PrecoUnitario * v.QuantidadeVendida)
+                    ValorTotal = g.Sum(v => v.QuantidadeVendida * v.PrecoUnitario)
                 })
-                .FirstOrDefaultAsync();
+                .ToListAsync();
         }
     }
 }

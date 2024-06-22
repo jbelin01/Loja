@@ -31,6 +31,7 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<FornecedorService>();
 builder.Services.AddScoped<VendaService>();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -40,7 +41,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -180,7 +180,7 @@ app.MapDelete("/fornecedores/{id}", async (int id, FornecedorService fornecedorS
     return Results.Ok();
 }).RequireAuthorization();
 
-// Rotas para Vendas
+//Vendas
 app.MapPost("/vendas", async (Venda venda, VendaService vendaService) =>
 {
     var result = await vendaService.AddVendaAsync(venda);
