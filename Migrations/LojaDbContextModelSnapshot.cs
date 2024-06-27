@@ -44,7 +44,7 @@ namespace Loja.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Clientes", (string)null);
+                    b.ToTable("Clientes");
                 });
 
             modelBuilder.Entity("Loja.Models.Fornecedor", b =>
@@ -77,7 +77,7 @@ namespace Loja.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Fornecedores", (string)null);
+                    b.ToTable("Fornecedores");
                 });
 
             modelBuilder.Entity("Loja.Models.Produto", b =>
@@ -101,7 +101,7 @@ namespace Loja.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Produtos", (string)null);
+                    b.ToTable("Produtos");
                 });
 
             modelBuilder.Entity("Loja.Models.Usuario", b =>
@@ -123,7 +123,7 @@ namespace Loja.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Usuarios", (string)null);
+                    b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("Loja.Models.Venda", b =>
@@ -159,7 +159,7 @@ namespace Loja.Migrations
 
                     b.HasIndex("ProdutoId");
 
-                    b.ToTable("Vendas", (string)null);
+                    b.ToTable("Vendas");
                 });
 
             modelBuilder.Entity("Loja.Models.Venda", b =>

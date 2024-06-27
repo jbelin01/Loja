@@ -10,40 +10,46 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adicionar serviços ao contêiner.
+// Configuração da autenticação usando JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
+            // Desabilitar validação de emissor e audiência
             ValidateIssuer = false,
             ValidateAudience = false,
+            // Habilitar validação da chave de assinatura
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("abcabcabcabcabcabcabcabcabcabcabc"))
         };
     });
 
+// Configuração da conexão com o banco de dados MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<LojaDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 26))));
 
+// Registro dos serviços no contêiner de injeção de dependências
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<FornecedorService>();
 builder.Services.AddScoped<VendaService>();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(); // Adicionar serviços de autorização
 
 var app = builder.Build();
 
+// Configuração para o ambiente de desenvolvimento
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseHttpsRedirection(); // Redirecionamento de HTTP para HTTPS
+app.UseAuthentication();   // Habilitar autenticação
+app.UseAuthorization();    // Habilitar autorização
 
+// Rota para login
 app.MapPost("/login", async (HttpContext context) =>
 {
     using var reader = new StreamReader(context.Request.Body);
@@ -53,7 +59,6 @@ app.MapPost("/login", async (HttpContext context) =>
     var senha = json.RootElement.GetProperty("senha").GetString();
 
     // Implementar a validação do usuário e senha aqui.
-    // Exemplo simplificado para fins de demonstração:
     if (senha == "1029")
     {
         var token = TokenService.GenerateToken(email);
@@ -66,12 +71,16 @@ app.MapPost("/login", async (HttpContext context) =>
     }
 });
 
+// ----------------------------PRODUTOS---------------------------------------------------------------------------
+
+// Rota para obter todos os produtos
 app.MapGet("/produtos", async (ProductService productService) =>
 {
     var produtos = await productService.GetAllProductsAsync();
     return Results.Ok(produtos);
-}).RequireAuthorization();
+});
 
+// Rota para obter um produto por ID
 app.MapGet("/produtos/{id}", async (int id, ProductService productService) =>
 {
     var produto = await productService.GetProductByIdAsync(id);
@@ -80,14 +89,16 @@ app.MapGet("/produtos/{id}", async (int id, ProductService productService) =>
         return Results.NotFound($"Produto com ID {id} não encontrado.");
     }
     return Results.Ok(produto);
-}).RequireAuthorization();
+});
 
+// Rota para adicionar um novo produto
 app.MapPost("/produtos", async (Produto produto, ProductService productService) =>
 {
     await productService.AddProductAsync(produto);
     return Results.Created($"/produtos/{produto.Id}", produto);
-}).RequireAuthorization();
+});
 
+// Rota para atualizar um produto existente
 app.MapPut("/produtos/{id}", async (int id, Produto produto, ProductService productService) =>
 {
     if (id != produto.Id)
@@ -96,20 +107,25 @@ app.MapPut("/produtos/{id}", async (int id, Produto produto, ProductService prod
     }
     await productService.UpdateProductAsync(produto);
     return Results.Ok();
-}).RequireAuthorization();
+});
 
+// Rota para deletar um produto por ID
 app.MapDelete("/produtos/{id}", async (int id, ProductService productService) =>
 {
     await productService.DeleteProductAsync(id);
     return Results.Ok();
-}).RequireAuthorization();
+});
 
+// ----------------------------CLIENTES---------------------------------------------------------------------------
+
+// Rota para obter todos os clientes
 app.MapGet("/clientes", async (ClienteService clienteService) =>
 {
     var clientes = await clienteService.GetAllClientesAsync();
     return Results.Ok(clientes);
-}).RequireAuthorization();
+});
 
+// Rota para obter um cliente por ID
 app.MapGet("/clientes/{id}", async (int id, ClienteService clienteService) =>
 {
     var cliente = await clienteService.GetClienteByIdAsync(id);
@@ -118,14 +134,16 @@ app.MapGet("/clientes/{id}", async (int id, ClienteService clienteService) =>
         return Results.NotFound($"Cliente com ID {id} não encontrado.");
     }
     return Results.Ok(cliente);
-}).RequireAuthorization();
+});
 
+// Rota para adicionar um novo cliente
 app.MapPost("/clientes", async (Cliente cliente, ClienteService clienteService) =>
 {
     await clienteService.AddClienteAsync(cliente);
     return Results.Created($"/clientes/{cliente.Id}", cliente);
-}).RequireAuthorization();
+});
 
+// Rota para atualizar um cliente existente
 app.MapPut("/clientes/{id}", async (int id, Cliente cliente, ClienteService clienteService) =>
 {
     if (id != cliente.Id)
@@ -134,20 +152,25 @@ app.MapPut("/clientes/{id}", async (int id, Cliente cliente, ClienteService clie
     }
     await clienteService.UpdateClienteAsync(cliente);
     return Results.Ok();
-}).RequireAuthorization();
+});
 
+// Rota para deletar um cliente por ID
 app.MapDelete("/clientes/{id}", async (int id, ClienteService clienteService) =>
 {
     await clienteService.DeleteClienteAsync(id);
     return Results.Ok();
-}).RequireAuthorization();
+});
 
+// ----------------------------FORNECEDORES---------------------------------------------------------------------------
+
+// Rota para obter todos os fornecedores
 app.MapGet("/fornecedores", async (FornecedorService fornecedorService) =>
 {
     var fornecedores = await fornecedorService.GetAllFornecedoresAsync();
     return Results.Ok(fornecedores);
-}).RequireAuthorization();
+});
 
+// Rota para obter um fornecedor por ID
 app.MapGet("/fornecedores/{id}", async (int id, FornecedorService fornecedorService) =>
 {
     var fornecedor = await fornecedorService.GetFornecedorByIdAsync(id);
@@ -156,14 +179,16 @@ app.MapGet("/fornecedores/{id}", async (int id, FornecedorService fornecedorServ
         return Results.NotFound($"Fornecedor com ID {id} não encontrado.");
     }
     return Results.Ok(fornecedor);
-}).RequireAuthorization();
+});
 
+// Rota para adicionar um novo fornecedor
 app.MapPost("/fornecedores", async (Fornecedor fornecedor, FornecedorService fornecedorService) =>
 {
     await fornecedorService.AddFornecedorAsync(fornecedor);
     return Results.Created($"/fornecedores/{fornecedor.Id}", fornecedor);
-}).RequireAuthorization();
+});
 
+// Rota para atualizar um fornecedor existente
 app.MapPut("/fornecedores/{id}", async (int id, Fornecedor fornecedor, FornecedorService fornecedorService) =>
 {
     if (id != fornecedor.Id)
@@ -172,15 +197,18 @@ app.MapPut("/fornecedores/{id}", async (int id, Fornecedor fornecedor, Fornecedo
     }
     await fornecedorService.UpdateFornecedorAsync(fornecedor);
     return Results.Ok();
-}).RequireAuthorization();
+});
 
+// Rota para deletar um fornecedor por ID
 app.MapDelete("/fornecedores/{id}", async (int id, FornecedorService fornecedorService) =>
 {
     await fornecedorService.DeleteFornecedorAsync(id);
     return Results.Ok();
-}).RequireAuthorization();
+});
 
-//Vendas
+// ----------------------------VENDAS---------------------------------------------------------------------------
+
+// Rota para adicionar uma nova venda
 app.MapPost("/vendas", async (Venda venda, VendaService vendaService) =>
 {
     var result = await vendaService.AddVendaAsync(venda);
@@ -189,8 +217,9 @@ app.MapPost("/vendas", async (Venda venda, VendaService vendaService) =>
         return Results.Created($"/vendas/{venda.Id}", venda);
     }
     return Results.BadRequest("Cliente ou produto não encontrado.");
-}).RequireAuthorization();
+});
 
+// Rota para obter vendas detalhadas por produto
 app.MapGet("/vendas/produto/{produtoId}", async (int produtoId, VendaService vendaService) =>
 {
     var vendas = await vendaService.GetVendasByProdutoDetalhadaAsync(produtoId);
@@ -203,14 +232,16 @@ app.MapGet("/vendas/produto/{produtoId}", async (int produtoId, VendaService ven
         QuantidadeVendida = v.QuantidadeVendida,
         PrecoVenda = v.PrecoUnitario
     }));
-}).RequireAuthorization();
+});
 
+// Rota para obter vendas sumarizadas por produto
 app.MapGet("/vendas/produto/{produtoId}/sumarizada", async (int produtoId, VendaService vendaService) =>
 {
     var venda = await vendaService.GetVendasByProdutoSumarizadaAsync(produtoId);
     return Results.Ok(venda);
-}).RequireAuthorization();
+});
 
+// Rota para obter vendas detalhadas por cliente
 app.MapGet("/vendas/cliente/{clienteId}", async (int clienteId, VendaService vendaService) =>
 {
     var vendas = await vendaService.GetVendasByClienteDetalhadaAsync(clienteId);
@@ -222,12 +253,13 @@ app.MapGet("/vendas/cliente/{clienteId}", async (int clienteId, VendaService ven
         QuantidadeVendida = v.QuantidadeVendida,
         PrecoVenda = v.PrecoUnitario
     }));
-}).RequireAuthorization();
+});
 
+// Rota para obter vendas sumarizadas por cliente
 app.MapGet("/vendas/cliente/{clienteId}/sumarizada", async (int clienteId, VendaService vendaService) =>
 {
     var venda = await vendaService.GetVendasByClienteSumarizadaAsync(clienteId);
     return Results.Ok(venda);
-}).RequireAuthorization();
+});
 
-app.Run();
+app.Run(); // Iniciar o aplicativo
